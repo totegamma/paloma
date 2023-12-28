@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	keeperutil "github.com/palomachain/paloma/util/keeper"
 	"time"
 
 	"cosmossdk.io/store/prefix"
@@ -143,10 +142,7 @@ func (k Keeper) UpdateGracePeriod(ctx context.Context) error {
 	}
 
 	vals, err := slice.MapErr(k.GetUnjailedValidators(ctx), func(i stakingtypes.ValidatorI) ([]byte, error) {
-		bz, err := keeperutil.ValAddressFromBech32(k.AddressCodec, i.GetOperator())
-		if err != nil {
-			return nil, err
-		}
+		bz := k.MustGetValAddr(i.GetOperator())
 		return bz, nil
 	})
 	if err != nil {
@@ -171,10 +167,8 @@ func (k Keeper) JailInactiveValidators(ctx context.Context) error {
 		if !(val.GetStatus() == stakingtypes.Bonded || val.GetStatus() == stakingtypes.Unbonding) {
 			continue
 		}
-		valAddr, err := keeperutil.ValAddressFromBech32(k.AddressCodec, val.GetOperator())
-		if err != nil {
-			return err
-		}
+		valAddr := k.MustGetValAddr(val.GetOperator())
+
 		alive, err := k.IsValidatorAlive(ctx, valAddr)
 		switch {
 		case err == nil:

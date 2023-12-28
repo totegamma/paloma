@@ -3,14 +3,17 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
+	"math/big"
+	"sort"
+
 	"cosmossdk.io/core/address"
 	cosmosstore "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
-	"errors"
-	"fmt"
 	"github.com/VolumeFi/whoops"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -21,8 +24,6 @@ import (
 	"github.com/palomachain/paloma/util/liblog"
 	"github.com/palomachain/paloma/util/slice"
 	"github.com/palomachain/paloma/x/valset/types"
-	"math/big"
-	"sort"
 )
 
 const (
@@ -342,12 +343,15 @@ func (k Keeper) isNewSnapshotWorthy(ctx context.Context, currentSnapshot, newSna
 
 func (k Keeper) GetUnjailedValidators(ctx context.Context) []stakingtypes.ValidatorI {
 	validators := []stakingtypes.ValidatorI{}
-	k.staking.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) bool {
+	err := k.staking.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) bool {
 		if !val.IsJailed() {
 			validators = append(validators, val)
 		}
 		return false
 	})
+	if err != nil {
+		liblog.FromSDKLogger(k.Logger(ctx)).WithError(err)
+	}
 
 	return validators
 }
@@ -376,16 +380,16 @@ func (k Keeper) ValidatorSupportsAllChains(ctx context.Context, validatorAddress
 func (k Keeper) createNewSnapshot(ctx context.Context) (*types.Snapshot, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	validators := []stakingtypes.ValidatorI{}
-	k.staking.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) bool {
-		bz, err := keeperutil.ValAddressFromBech32(k.AddressCodec, val.GetOperator())
-		if err != nil {
-			panic(err)
-		}
+	err := k.staking.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) bool {
+		bz := k.MustGetValAddr(val.GetOperator())
 		if val.IsBonded() && !val.IsJailed() && k.ValidatorSupportsAllChains(ctx, bz) {
 			validators = append(validators, val)
 		}
 		return false
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	snapshot := &types.Snapshot{
 		Height:      sdkCtx.BlockHeight(),
@@ -394,10 +398,7 @@ func (k Keeper) createNewSnapshot(ctx context.Context) (*types.Snapshot, error) 
 	}
 
 	for _, val := range validators {
-		bz, err := keeperutil.ValAddressFromBech32(k.AddressCodec, val.GetOperator())
-		if err != nil {
-			return nil, err
-		}
+		bz := k.MustGetValAddr(val.GetOperator())
 		chainInfo, err := k.GetValidatorChainInfos(ctx, bz)
 		if err != nil {
 			return nil, err
@@ -549,14 +550,16 @@ func (k Keeper) Jail(ctx context.Context, valAddr sdk.ValAddress, reason string)
 	consensusPower := val.GetConsensusPower(k.powerReduction)
 	totalConsensusPower := int64(0)
 	count := 0
-	k.staking.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) bool {
+	err = k.staking.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) bool {
 		if val.IsBonded() && !val.IsJailed() {
 			totalConsensusPower += val.GetConsensusPower(k.powerReduction)
 			count++
 		}
 		return false
 	})
-
+	if err != nil {
+		return err
+	}
 	if count == 1 {
 		return ErrCannotJailValidator.Format(valAddr).WrapS("number of active validators would be zero then")
 	}
@@ -585,7 +588,10 @@ func (k Keeper) Jail(ctx context.Context, valAddr sdk.ValAddress, reason string)
 				panic(r)
 			}
 		}()
-		k.staking.Jail(ctx, cons)
+		err := k.staking.Jail(ctx, cons)
+		if err != nil {
+			return err
+		}
 		return
 	}()
 
@@ -640,4 +646,16 @@ func (k Keeper) snapshotStore(ctx context.Context) storetypes.KVStore {
 func (k Keeper) SaveModifiedSnapshot(ctx context.Context, snapshot *types.Snapshot) error {
 	snapStore := k.snapshotStore(ctx)
 	return keeperutil.Save(snapStore, k.cdc, keeperutil.Uint64ToByte(snapshot.GetId()), snapshot)
+}
+func (k *Keeper) MustGetValAddr(addr string) sdk.ValAddress {
+	defer func() {
+		if r := recover(); r != nil {
+			k.Logger(context.Background()).Error("error while getting valAddr", r)
+		}
+	}()
+	bz, err := k.AddressCodec.StringToBytes(addr)
+	if err != nil {
+		panic(err)
+	}
+	return bz
 }

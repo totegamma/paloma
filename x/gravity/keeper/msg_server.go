@@ -11,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errorsmod "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	keeperutil "github.com/palomachain/paloma/util/keeper"
 	"github.com/palomachain/paloma/x/gravity/types"
 )
 
@@ -135,7 +134,7 @@ func (k msgServer) checkOrchestratorValidatorInSet(ctx context.Context, orchestr
 	if !found {
 		return sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
-	valAddress, err := keeperutil.ValAddressFromBech32(k.addressCodec, validator.GetOperator())
+	valAddress := k.MustGetValAddr(validator.GetOperator())
 	if err != nil {
 		return err
 	}
@@ -193,7 +192,7 @@ func (k msgServer) confirmHandlerCommon(ctx context.Context, ethAddress string, 
 	if !found {
 		return sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
-	valAddress, err := keeperutil.ValAddressFromBech32(k.addressCodec, validator.GetOperator())
+	valAddress := k.MustGetValAddr(validator.GetOperator())
 	if !validator.IsBonded() && !validator.IsUnbonding() {
 		// We must only accept confirms from bonded or unbonding validators
 		return sdkerrors.Wrap(types.ErrInvalid, "validator is unbonded")

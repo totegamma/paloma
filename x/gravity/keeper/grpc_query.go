@@ -7,7 +7,6 @@ import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	keeperutil "github.com/palomachain/paloma/util/keeper"
 	"github.com/palomachain/paloma/x/gravity/types"
 )
 
@@ -172,7 +171,7 @@ func (k Keeper) LastEventNonceByAddr(
 	if !found {
 		return nil, errors.Wrap(types.ErrUnknown, "address")
 	}
-	valAddress, err := keeperutil.ValAddressFromBech32(k.addressCodec, validator.GetOperator())
+	valAddress := k.MustGetValAddr(validator.GetOperator())
 	if err := sdk.VerifyAddressFormat(valAddress); err != nil {
 		return nil, errors.Wrap(err, "invalid validator address")
 	}

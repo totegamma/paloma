@@ -42,7 +42,7 @@ type Keeper struct {
 	accountKeeper     types.AccountKeeper
 	ibcTransferKeeper ibctransferkeeper.Keeper
 	evmKeeper         types.EVMKeeper
-	addressCodec      address.Codec
+	AddressCodec      address.Codec
 	storeGetter       keeperutil.StoreGetter
 
 	AttestationHandler interface {
@@ -254,4 +254,16 @@ func (gsg GravityStoreGetter) Store(ctx context.Context) storetypes.KVStore {
 
 func (k Keeper) GetAuthority() string {
 	return k.authority
+}
+func (k *Keeper) MustGetValAddr(addr string) sdk.ValAddress {
+	defer func() {
+		if r := recover(); r != nil {
+			k.Logger(context.Background()).Error("error while getting valAddr", r)
+		}
+	}()
+	bz, err := k.AddressCodec.StringToBytes(addr)
+	if err != nil {
+		panic(err)
+	}
+	return bz
 }

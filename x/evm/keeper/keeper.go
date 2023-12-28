@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"cosmossdk.io/core/address"
 	corestore "cosmossdk.io/core/store"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
@@ -103,6 +104,7 @@ type Keeper struct {
 	ider            keeperutil.IDGenerator
 	msgSender       types.MsgSender
 	msgAssigner     types.MsgAssigner
+	AddressCodec    address.Codec
 	authority       string
 }
 
@@ -140,8 +142,9 @@ func (k Keeper) PickValidatorForMessage(ctx context.Context, chainReferenceID st
 	return k.msgAssigner.PickValidatorForMessage(ctx, weights, chainReferenceID, requirements)
 }
 
-func (k Keeper) Logger(ctx sdk.Context) liblog.Logr {
-	return liblog.FromSDKLogger(ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName)))
+func (k Keeper) Logger(ctx context.Context) liblog.Logr {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	return liblog.FromSDKLogger(sdkCtx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName)))
 
 }
 
@@ -786,4 +789,16 @@ func (k Keeper) GetValidatorAddressByEthAddress(ctx context.Context, ethAddr gra
 		}
 	}
 	return
+}
+func (k *Keeper) MustGetValAddr(addr string) sdk.ValAddress {
+	defer func() {
+		if r := recover(); r != nil {
+			k.Logger(context.Background()).Error("error while getting valAddr", r)
+		}
+	}()
+	bz, err := k.AddressCodec.StringToBytes(addr)
+	if err != nil {
+		panic(err)
+	}
+	return bz
 }

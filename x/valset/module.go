@@ -178,7 +178,10 @@ func (am AppModule) EndBlock(ctx context.Context) error {
 		}
 	}
 
-	am.keeper.UpdateGracePeriod(sdkCtx)
+	err := am.keeper.UpdateGracePeriod(sdkCtx)
+	if err != nil {
+		return err
+	}
 
 	if sdkCtx.BlockHeight() > 50 && sdkCtx.BlockHeight()%10 == 0 {
 		if err := am.keeper.JailInactiveValidators(sdkCtx); err != nil {

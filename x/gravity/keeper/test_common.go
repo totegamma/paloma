@@ -72,7 +72,6 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	gravityparams "github.com/palomachain/paloma/app/params"
-	keeperutil "github.com/palomachain/paloma/util/keeper"
 	consensuskeeper "github.com/palomachain/paloma/x/consensus/keeper"
 	consensustypes "github.com/palomachain/paloma/x/consensus/types"
 	evmkeeper "github.com/palomachain/paloma/x/evm/keeper"
@@ -317,7 +316,7 @@ func addValidators(t *testing.T, input *TestInput, count int) {
 
 		pubKey, err := validator.ConsPubKey()
 		require.NoError(t, err)
-		valAddress, err := keeperutil.ValAddressFromBech32(input.addressCodec, validator.GetOperator())
+		valAddress := input.GravityKeeper.MustGetValAddr(validator.GetOperator())
 		sdkCtx := sdk.UnwrapSDKContext(input.Context)
 		err = input.ValsetKeeper.AddExternalChainInfo(sdkCtx, valAddress, []*valsettypes.ExternalChainInfo{
 			{

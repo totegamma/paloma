@@ -13,7 +13,6 @@ import (
 	"github.com/VolumeFi/whoops"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	keeperutil "github.com/palomachain/paloma/util/keeper"
 	"github.com/palomachain/paloma/util/liblog"
 	"github.com/palomachain/paloma/x/gravity/types"
 )
@@ -32,7 +31,7 @@ func (k Keeper) Attest(
 	}
 	valAddr := val.GetOperator()
 
-	valAddress, err := keeperutil.ValAddressFromBech32(k.addressCodec, val.GetOperator())
+	valAddress := k.MustGetValAddr(val.GetOperator())
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +117,7 @@ func (k Keeper) TryAttestation(ctx context.Context, att *types.Attestation) erro
 		attestationPower := math.NewInt(0)
 		for _, validator := range att.Votes {
 
-			val, err := keeperutil.ValAddressFromBech32(k.addressCodec, validator)
+			val := k.MustGetValAddr(validator)
 			if err != nil {
 				return err
 			}

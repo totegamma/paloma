@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/gogoproto/proto"
 	keeperutil "github.com/palomachain/paloma/util/keeper"
 	"github.com/palomachain/paloma/x/consensus/types"
 )
@@ -18,13 +17,6 @@ import (
 var _ Queuer = Queue{}
 
 type ConsensusMsg = types.ConsensusMsg
-
-type codecMarshaler interface {
-	types.AnyUnpacker
-	MarshalInterface(i proto.Message) ([]byte, error)
-	UnmarshalInterface(bz []byte, ptr interface{}) error
-	Unmarshal(bz []byte, ptr codec.ProtoMarshaler) error
-}
 
 // Queue is a database storing messages that need to be signed.
 type Queue struct {

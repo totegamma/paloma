@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"fmt"
-	keeperutil "github.com/palomachain/paloma/util/keeper"
 	"math/big"
 	"os"
 	"strings"
@@ -74,7 +73,7 @@ func TestEndToEndForEvmArbitraryCall(t *testing.T) {
 		require.NoError(t, err)
 		pubKey, err := validator.ConsPubKey()
 		require.NoError(t, err)
-		operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, validator.GetOperator())
+		operator := a.EvmKeeper.MustGetValAddr(validator.GetOperator())
 		err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, []*valsettypes.ExternalChainInfo{
 			{
 				ChainType:        "evm",
@@ -111,7 +110,7 @@ func TestEndToEndForEvmArbitraryCall(t *testing.T) {
 	require.NoError(t, err)
 
 	accAddr := crypto.PubkeyToAddress(private.PublicKey)
-	operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, validators[0].GetOperator())
+	operator := a.EvmKeeper.MustGetValAddr(validators[0].GetOperator())
 	err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, []*valsettypes.ExternalChainInfo{
 		{
 			ChainType:        chainType,
@@ -184,7 +183,7 @@ func TestFirstSnapshot_OnSnapshotBuilt(t *testing.T) {
 	validators := genValidators(25, 25000)
 	for _, val := range validators {
 		a.StakingKeeper.SetValidator(ctx, val)
-		operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, val.GetOperator())
+		operator := a.EvmKeeper.MustGetValAddr(val.GetOperator())
 		err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, []*valsettypes.ExternalChainInfo{
 			{
 				ChainType:        "evm",
@@ -244,7 +243,7 @@ func TestRecentPublishedSnapshot_OnSnapshotBuilt(t *testing.T) {
 	validators := genValidators(25, 25000)
 	for _, val := range validators {
 		a.StakingKeeper.SetValidator(ctx, val)
-		operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, val.GetOperator())
+		operator := a.EvmKeeper.MustGetValAddr(val.GetOperator())
 		err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, []*valsettypes.ExternalChainInfo{
 			{
 				ChainType:        "evm",
@@ -284,7 +283,7 @@ func TestRecentPublishedSnapshot_OnSnapshotBuilt(t *testing.T) {
 	validators = genValidators(2, 25000)
 	for _, val := range validators {
 		a.StakingKeeper.SetValidator(ctx, val)
-		operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, val.GetOperator())
+		operator := a.EvmKeeper.MustGetValAddr(val.GetOperator())
 		err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, []*valsettypes.ExternalChainInfo{
 			{
 				ChainType:        "evm",
@@ -341,7 +340,7 @@ func TestOldPublishedSnapshot_OnSnapshotBuilt(t *testing.T) {
 	validators := genValidators(25, 25000)
 	for _, val := range validators {
 		a.StakingKeeper.SetValidator(ctx, val)
-		operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, val.GetOperator())
+		operator := a.EvmKeeper.MustGetValAddr(val.GetOperator())
 		err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, []*valsettypes.ExternalChainInfo{
 			{
 				ChainType:        "evm",
@@ -383,7 +382,7 @@ func TestOldPublishedSnapshot_OnSnapshotBuilt(t *testing.T) {
 	validators = genValidators(2, 25000)
 	for _, val := range validators {
 		a.StakingKeeper.SetValidator(ctx, val)
-		operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, val.GetOperator())
+		operator := a.EvmKeeper.MustGetValAddr(val.GetOperator())
 		err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, []*valsettypes.ExternalChainInfo{
 			{
 				ChainType:        "evm",
@@ -571,7 +570,7 @@ func TestKeeper_ValidatorSupportsAllChains(t *testing.T) {
 						Pubkey:           accAddr[:],
 					}
 				}
-				operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, validator.GetOperator())
+				operator := a.EvmKeeper.MustGetValAddr(validator.GetOperator())
 				err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, externalChains)
 				require.NoError(t, err)
 
@@ -615,7 +614,7 @@ func TestKeeper_ValidatorSupportsAllChains(t *testing.T) {
 				accAddr := crypto.PubkeyToAddress(private.PublicKey)
 
 				// Only add support for one of two chains created
-				operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, validator.GetOperator())
+				operator := a.EvmKeeper.MustGetValAddr(validator.GetOperator())
 				err = a.ValsetKeeper.AddExternalChainInfo(
 					ctx,
 					operator,
@@ -741,7 +740,7 @@ var _ = Describe("evm", func() {
 					Expect(err).To(BeNil())
 					accAddr1 := crypto.PubkeyToAddress(private1.PublicKey)
 					accAddr2 := crypto.PubkeyToAddress(private2.PublicKey)
-					operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, val.GetOperator())
+					operator := a.EvmKeeper.MustGetValAddr(val.GetOperator())
 					err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, []*valsettypes.ExternalChainInfo{
 						{
 							ChainType:        "evm",
@@ -883,7 +882,7 @@ var _ = Describe("evm", func() {
 						private, err := crypto.GenerateKey()
 						Expect(err).To(BeNil())
 						accAddr := crypto.PubkeyToAddress(private.PublicKey)
-						operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, val.GetOperator())
+						operator := a.EvmKeeper.MustGetValAddr(val.GetOperator())
 						err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, []*valsettypes.ExternalChainInfo{
 							{
 								ChainType:        "evm",
@@ -1007,7 +1006,7 @@ var _ = Describe("evm", func() {
 							private, err := crypto.GenerateKey()
 							Expect(err).To(BeNil())
 							accAddr := crypto.PubkeyToAddress(private.PublicKey)
-							operator, err := keeperutil.ValAddressFromBech32(a.ValsetKeeper.AddressCodec, val.GetOperator())
+							operator := a.EvmKeeper.MustGetValAddr(val.GetOperator())
 							err = a.ValsetKeeper.AddExternalChainInfo(ctx, operator, []*valsettypes.ExternalChainInfo{
 								{
 									ChainType:        "evm",

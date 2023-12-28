@@ -53,8 +53,8 @@ var _ = Describe("jailing validators with missing external chain infos", func() 
 			// val[1] has only one chain
 			// val[2] doesn't have anything
 			// All other vals have everything
-			valAddress, err := k.MustGetValAddr(vals[0].GetOperator())
-			err = a.ValsetKeeper.AddExternalChainInfo(ctx, valAddress, []*valsettypes.ExternalChainInfo{
+			valAddress := k.MustGetValAddr(vals[0].GetOperator())
+			err := a.ValsetKeeper.AddExternalChainInfo(ctx, valAddress, []*valsettypes.ExternalChainInfo{
 				{
 					ChainType:        "evm",
 					ChainReferenceID: "c1",
@@ -69,7 +69,7 @@ var _ = Describe("jailing validators with missing external chain infos", func() 
 				},
 			})
 			Expect(err).To(BeNil())
-			valAddress2, err := k.MustGetValAddr(vals[1].GetOperator())
+			valAddress2 := k.MustGetValAddr(vals[1].GetOperator())
 			err = a.ValsetKeeper.AddExternalChainInfo(ctx, valAddress2, []*valsettypes.ExternalChainInfo{
 				{
 					ChainType:        "evm",
@@ -80,7 +80,7 @@ var _ = Describe("jailing validators with missing external chain infos", func() 
 			})
 			Expect(err).To(BeNil())
 			for i, v := range vals[3:] {
-				valAddress, err := k.MustGetValAddr(v.GetOperator())
+				valAddress := k.MustGetValAddr(v.GetOperator())
 				err = a.ValsetKeeper.AddExternalChainInfo(ctx, valAddress, []*valsettypes.ExternalChainInfo{
 					{
 						ChainType:        "evm",
@@ -108,15 +108,15 @@ var _ = Describe("jailing validators with missing external chain infos", func() 
 
 		It("jails val[1] and val[2], but no val[0]", func() {
 			By("validators are not jailed")
-			valAddress1, err := k.MustGetValAddr(vals[0].GetOperator())
-			valAddress2, err := k.MustGetValAddr(vals[1].GetOperator())
-			valAddress3, err := k.MustGetValAddr(vals[2].GetOperator())
+			valAddress1 := k.MustGetValAddr(vals[0].GetOperator())
+			valAddress2 := k.MustGetValAddr(vals[1].GetOperator())
+			valAddress3 := k.MustGetValAddr(vals[2].GetOperator())
 			Expect(a.ValsetKeeper.IsJailed(ctx, valAddress1)).To(BeFalse())
 			Expect(a.ValsetKeeper.IsJailed(ctx, valAddress2)).To(BeFalse())
 			Expect(a.ValsetKeeper.IsJailed(ctx, valAddress3)).To(BeFalse())
 
 			By("jail validators with missing external chain infos")
-			err = k.JailValidatorsWithMissingExternalChainInfos(ctx)
+			err := k.JailValidatorsWithMissingExternalChainInfos(ctx)
 			Expect(err).To(BeNil())
 
 			By("check for jailed validators")
