@@ -12,6 +12,5 @@ func (k Keeper) GetParams(ctx context.Context) types.Params {
 }
 
 // SetParams set the params
-func (k Keeper) SetParams(ctx context.Context, params types.Params) error {
-	return nil
+func (k Keeper) SetParams(ctx context.Context, params types.Params) {
 }

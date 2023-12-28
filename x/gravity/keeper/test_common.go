@@ -304,7 +304,8 @@ func addValidators(t *testing.T, input *TestInput, count int) {
 	}
 
 	// Run the staking endblocker to ensure valset is correct in state
-	input.StakingKeeper.EndBlocker(input.Context)
+	_, err := input.StakingKeeper.EndBlocker(input.Context)
+	require.NoError(t, err)
 
 	// Register eth addresses and orchestrator address for each validator
 	for i, addr := range ValAddrs {
@@ -331,7 +332,7 @@ func addValidators(t *testing.T, input *TestInput, count int) {
 
 	// Create a Snapshot
 	sdkCtx := sdk.UnwrapSDKContext(input.Context)
-	_, err := input.ValsetKeeper.TriggerSnapshotBuild(sdkCtx)
+	_, err = input.ValsetKeeper.TriggerSnapshotBuild(sdkCtx)
 	require.NoError(t, err)
 }
 
@@ -391,14 +392,16 @@ func SetupTestChain(t *testing.T, weights []uint64) (TestInput, context.Context)
 		require.NoError(t, err)
 
 		// Run the staking endblocker to ensure valset is correct in state
-		input.StakingKeeper.EndBlocker(input.Context)
+		_, err = input.StakingKeeper.EndBlocker(input.Context)
+		require.NoError(t, err)
 
 		// increase block height by 100 blocks
 		sdkCtx := sdk.UnwrapSDKContext(input.Context)
 		input.Context = sdkCtx.WithBlockHeight(sdkCtx.BlockHeight() + 100)
 
 		// Run the staking endblocker to ensure valset is correct in state
-		input.StakingKeeper.EndBlocker(input.Context)
+		_, err = input.StakingKeeper.EndBlocker(input.Context)
+		require.NoError(t, err)
 
 	}
 
@@ -576,7 +579,8 @@ func CreateTestEnv(t *testing.T) TestInput {
 	require.NoError(t, err)
 
 	// set genesis items required for distribution
-	distKeeper.FeePool.Set(ctx, distrtypes.InitialFeePool())
+	err = distKeeper.FeePool.Set(ctx, distrtypes.InitialFeePool())
+	require.NoError(t, err)
 
 	// set up initial accounts
 	for name, perms := range maccPerms {
@@ -594,7 +598,8 @@ func CreateTestEnv(t *testing.T) TestInput {
 			require.NoError(t, err)
 			newCoins := feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(amt...)...)
 			feePool.CommunityPool = newCoins
-			distKeeper.FeePool.Set(ctx, feePool)
+			err = distKeeper.FeePool.Set(ctx, feePool)
+			require.NoError(t, err)
 		}
 		accountKeeper.SetModuleAccount(ctx, mod)
 	}

@@ -102,13 +102,16 @@ func NewTestApp(t testing, isCheckTx bool) TestApp {
 			panic(err)
 		}
 
-		app.InitChain(
+		_, err = app.InitChain(
 			&abci.RequestInitChain{
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
 			},
 		)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return TestApp{*app}

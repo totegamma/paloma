@@ -59,7 +59,8 @@ func TestNonValidatorBatchConfirm(t *testing.T) {
 	require.NoError(t, err)
 
 	// Run the staking endblocker to ensure valset is correct in state
-	input.StakingKeeper.EndBlocker(input.Context)
+	_, err = input.StakingKeeper.EndBlocker(input.Context)
+	require.NoError(t, err)
 
 	ethAddr, err := types.NewEthAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
 	if err != nil {
