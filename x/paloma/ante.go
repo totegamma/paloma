@@ -3,13 +3,13 @@ package paloma
 import (
 	"context"
 	"fmt"
-	"github.com/palomachain/paloma/util/liblog"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/x/feegrant"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
+	"github.com/palomachain/paloma/util/liblog"
 	"github.com/palomachain/paloma/util/libmeta"
 	"github.com/palomachain/paloma/x/paloma/types"
 	vtypes "github.com/palomachain/paloma/x/valset/types"

@@ -1,10 +1,10 @@
 package keeper
 
 import (
-	"github.com/cosmos/gogoproto/proto"
 	"reflect"
 
 	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/gogoproto/proto"
 )
 
 func Save(store storetypes.KVStore, pm ProtoMarshaler, key []byte, val proto.Message) error {

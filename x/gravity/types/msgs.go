@@ -332,7 +332,7 @@ func (msg MsgSubmitBadSignatureEvidence) Type() string { return "Submit_Bad_Sign
 // Route should return the name of the module
 func (msg MsgSubmitBadSignatureEvidence) Route() string { return RouterKey }
 
-//MsgUpdateParams
+// MsgUpdateParams
 
 // ValidateBasic performs stateless checks
 func (msg *MsgUpdateParams) ValidateBasic() (err error) {

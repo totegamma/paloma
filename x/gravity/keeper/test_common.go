@@ -7,17 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/core/address"
-	"cosmossdk.io/store/metrics"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	"cosmossdk.io/store"
+	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/evidence"
 	"cosmossdk.io/x/upgrade"
+	// upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
+	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	dbm "github.com/cosmos/cosmos-db"
@@ -28,10 +27,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	ccrypto "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
@@ -61,10 +62,6 @@ import (
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-
-	//upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
@@ -273,7 +270,6 @@ type TestInput struct {
 	Context           context.Context
 	Marshaler         codec.Codec
 	LegacyAmino       *codec.LegacyAmino
-	addressCodec      address.Codec
 	GravityStoreKey   *storetypes.KVStoreKey
 }
 
@@ -684,7 +680,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 	consensusKeeper := consensuskeeper.NewKeeper(
 		marshaler,
 		runtime.NewKVStoreService(keyConsensus),
-		//memKeyConsensus,
+		// memKeyConsensus,
 		getSubspace(paramsKeeper, consensustypes.ModuleName),
 		valsetKeeper,
 		consensusRegistry,
@@ -693,7 +689,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 	evmKeeper := evmkeeper.NewKeeper(
 		marshaler,
 		runtime.NewKVStoreService(keyEvm),
-		//memKeyEvm,
+		// memKeyEvm,
 		consensusKeeper,
 		valsetKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),

@@ -155,6 +155,7 @@ func (k Keeper) CheckChainVersion(ctx context.Context) {
 		return
 	}
 }
+
 func (k *Keeper) MustGetValAddr(addr string) sdk.ValAddress {
 	defer func() {
 		if r := recover(); r != nil {

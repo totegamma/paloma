@@ -77,7 +77,7 @@ func newApp(
 	traceStore io.Writer,
 	appOpts servertypes.AppOptions,
 ) servertypes.Application {
-	//baseappOptions := server.DefaultBaseappOptions(appOpts)
+	// baseappOptions := server.DefaultBaseappOptions(appOpts)
 
 	return app.New(
 		logger, db, traceStore, true,
@@ -92,7 +92,6 @@ func initRootCmd(
 	appCodec params.EncodingConfig,
 	basicManager module.BasicManager,
 ) {
-
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(basicManager, palomaapp.DefaultNodeHome),
 		genesisCommand(txConfig, basicManager, appExport),

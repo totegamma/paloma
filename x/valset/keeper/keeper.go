@@ -225,7 +225,6 @@ func (k Keeper) TriggerSnapshotBuild(ctx context.Context) (*types.Snapshot, erro
 func (k Keeper) isNewSnapshotWorthy(ctx context.Context, currentSnapshot, newSnapshot *types.Snapshot) bool {
 	log := func(reason string) {
 		liblog.FromSDKLogger(k.Logger(ctx)).WithFields("reason", reason).Info("new snapshot is worthy")
-
 	}
 	// if there is no current snapshot, that this new one is worthy
 	if currentSnapshot == nil {
@@ -647,6 +646,7 @@ func (k Keeper) SaveModifiedSnapshot(ctx context.Context, snapshot *types.Snapsh
 	snapStore := k.snapshotStore(ctx)
 	return keeperutil.Save(snapStore, k.cdc, keeperutil.Uint64ToByte(snapshot.GetId()), snapshot)
 }
+
 func (k *Keeper) MustGetValAddr(addr string) sdk.ValAddress {
 	defer func() {
 		if r := recover(); r != nil {

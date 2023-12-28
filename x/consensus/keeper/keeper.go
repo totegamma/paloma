@@ -37,7 +37,6 @@ func NewKeeper(
 	valsetKeeper types.ValsetKeeper,
 	reg *registry,
 ) *Keeper {
-
 	k := &Keeper{
 		cdc:        cdc,
 		storeKey:   storeKey,

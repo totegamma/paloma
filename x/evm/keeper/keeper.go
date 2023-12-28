@@ -11,14 +11,13 @@ import (
 
 	"cosmossdk.io/core/address"
 	corestore "cosmossdk.io/core/store"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/VolumeFi/whoops"
-	"github.com/cosmos/cosmos-sdk/runtime"
-
-	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -145,7 +144,6 @@ func (k Keeper) PickValidatorForMessage(ctx context.Context, chainReferenceID st
 func (k Keeper) Logger(ctx context.Context) liblog.Logr {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	return liblog.FromSDKLogger(sdkCtx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName)))
-
 }
 
 func (k Keeper) ChangeMinOnChainBalance(ctx sdk.Context, chainReferenceID string, balance *big.Int) error {
@@ -405,7 +403,6 @@ func (k Keeper) justInTimeValsetUpdate(ctx context.Context, chain *types.ChainIn
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	latestSnapshot, err := k.Valset.GetCurrentSnapshot(ctx)
-
 	if err != nil {
 		k.Logger(sdkCtx).Error("couldn't get latest snapshot", "err", err)
 		return err
@@ -790,6 +787,7 @@ func (k Keeper) GetValidatorAddressByEthAddress(ctx context.Context, ethAddr gra
 	}
 	return
 }
+
 func (k *Keeper) MustGetValAddr(addr string) sdk.ValAddress {
 	defer func() {
 		if r := recover(); r != nil {

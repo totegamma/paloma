@@ -1,10 +1,9 @@
 package evm
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-
-	"context"
 
 	"cosmossdk.io/core/appmodule"
 	abci "github.com/cometbft/cometbft/abci/types"

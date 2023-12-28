@@ -25,8 +25,8 @@ func newMockSubspace(ps *types.Params) mockSubspace {
 func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
 	*ps.(*types.Params) = *ms.ps
 }
-func TestMigration(t *testing.T) {
 
+func TestMigration(t *testing.T) {
 	encCfg := keeper.MakeTestEncodingConfig()
 	cdc := encCfg.Codec
 	storeKey := st.NewKVStoreKey(string(types.ParamsKey))
@@ -42,5 +42,4 @@ func TestMigration(t *testing.T) {
 	bz := store.Get(types.ParamsKey)
 	require.NoError(t, cdc.Unmarshal(bz, &res))
 	require.Equal(t, legacySubspace.ps, res)
-
 }

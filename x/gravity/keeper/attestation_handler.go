@@ -160,7 +160,6 @@ func (a AttestationHandler) handleSendToPaloma(ctx context.Context, claim types.
 		}
 
 	} else {
-
 		if err := sdkCtx.EventManager().EmitTypedEvent(
 			&types.EventSendToPaloma{
 				Amount: claim.Amount.String(),

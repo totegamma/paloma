@@ -17,7 +17,6 @@ import (
 
 // nolint: exhaustruct
 func TestQueryGetAttestations(t *testing.T) {
-
 	input := keeper.CreateTestEnv(t)
 	encCfg := app.MakeEncodingConfig()
 	k := input.GravityKeeper

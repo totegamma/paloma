@@ -6,15 +6,13 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	"cosmossdk.io/core/store"
-	storetypes "cosmossdk.io/store/types"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/VolumeFi/whoops"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	xchain "github.com/palomachain/paloma/internal/x-chain"
@@ -43,7 +41,6 @@ func NewKeeper(
 	evmKeeper types.EvmKeeper,
 	chains []xchain.Bridge,
 ) *Keeper {
-
 	cm := slice.MustMakeMapKeys(chains, func(c xchain.Bridge) xchain.Type {
 		return c.XChainType()
 	})

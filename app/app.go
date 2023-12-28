@@ -316,7 +316,6 @@ func New(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
-
 	interfaceRegistry, _ := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
 		ProtoFiles: proto.HybridResolver,
 		SigningOptions: signing.Options{
@@ -446,8 +445,8 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		authcodec.NewBech32Codec(params2.ValidatorAddressPrefix),
 		authcodec.NewBech32Codec(params2.ConsNodeAddressPrefix),
-		//app.StakingKeeper.ValidatorAddressCodec(),
-		//app.StakingKeeper.ConsensusAddressCodec(),
+		// app.StakingKeeper.ValidatorAddressCodec(),
+		// app.StakingKeeper.ConsensusAddressCodec(),
 	)
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec,

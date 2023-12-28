@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	xchain "github.com/palomachain/paloma/internal/x-chain"
 	"github.com/palomachain/paloma/util/slice"
 	"github.com/palomachain/paloma/x/evm/types"

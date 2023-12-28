@@ -17,7 +17,7 @@ type Attestator struct {
 // ProcessAllEvidence provides a mock function with given fields: ctx, task, evidence
 func (_m *Attestator) ProcessAllEvidence(ctx context.Context, task consensustypes.AttestTask, evidence []consensustypes.Evidence) (consensustypes.AttestResult, error) {
 	ret := _m.Called(ctx, task, evidence)
-	sdkCtx:=types.UnwrapSDKContext(ctx)
+	sdkCtx := types.UnwrapSDKContext(ctx)
 
 	var r0 consensustypes.AttestResult
 	var r1 error
@@ -42,7 +42,7 @@ func (_m *Attestator) ProcessAllEvidence(ctx context.Context, task consensustype
 // ValidateEvidence provides a mock function with given fields: ctx, task, evidence
 func (_m *Attestator) ValidateEvidence(ctx context.Context, task consensustypes.AttestTask, evidence consensustypes.Evidence) error {
 	ret := _m.Called(ctx, task, evidence)
-	sdkCtx:=types.UnwrapSDKContext(ctx)
+	sdkCtx := types.UnwrapSDKContext(ctx)
 	var r0 error
 	if rf, ok := ret.Get(0).(func(types.Context, consensustypes.AttestTask, consensustypes.Evidence) error); ok {
 		r0 = rf(sdkCtx, task, evidence)

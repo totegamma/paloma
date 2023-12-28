@@ -65,7 +65,6 @@ func NewKeeper(
 	authority string,
 ) Keeper {
 	k := Keeper{
-
 		cdc:                cdc,
 		bankKeeper:         bankKeeper,
 		StakingKeeper:      stakingKeeper,
@@ -255,6 +254,7 @@ func (gsg GravityStoreGetter) Store(ctx context.Context) storetypes.KVStore {
 func (k Keeper) GetAuthority() string {
 	return k.authority
 }
+
 func (k *Keeper) MustGetValAddr(addr string) sdk.ValAddress {
 	defer func() {
 		if r := recover(); r != nil {

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
