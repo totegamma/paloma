@@ -3,6 +3,8 @@ package keeper
 import (
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/codec/address"
+
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/metrics"
@@ -47,6 +49,7 @@ func ValsetKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		nil,
 		"v1.4.0",
 		sdk.DefaultPowerReduction,
+		address.NewBech32Codec("paloma"),
 	)
 
 	k.EvmKeeper = mocks.NewEvmKeeper(t)

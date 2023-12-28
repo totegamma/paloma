@@ -53,6 +53,7 @@ func NewKeeper(
 	staking types.StakingKeeper,
 	minimumPigeonVersion string,
 	powerReduction sdkmath.Int,
+	addressCodec address.Codec,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -66,6 +67,7 @@ func NewKeeper(
 		staking:              staking,
 		minimumPigeonVersion: minimumPigeonVersion,
 		powerReduction:       powerReduction,
+		AddressCodec:         addressCodec,
 	}
 	k.ider = keeperutil.NewIDGenerator(keeperutil.StoreGetterFn(func(ctx context.Context) storetypes.KVStore {
 		store := runtime.KVStoreAdapter(k.storeKey.OpenKVStore(ctx))

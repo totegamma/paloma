@@ -119,8 +119,11 @@ func (k Keeper) JailValidatorsWithMissingExternalChainInfos(ctx context.Context)
 func (k Keeper) CheckChainVersion(ctx context.Context) {
 	// app needs to be in the [major].[minor] space,
 	// but needs to be running at least [major].[minor].[patch]
-	govVer, govHeight := k.Upgrade.GetLastCompletedUpgrade(ctx)
-
+	govVer, govHeight, err := k.Upgrade.GetLastCompletedUpgrade(ctx)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if err != nil {
+		liblog.FromSDKLogger(sdkCtx.Logger()).WithError(err)
+	}
 	if len(govVer) == 0 || govHeight == 0 {
 		return
 	}

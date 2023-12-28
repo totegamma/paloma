@@ -7,13 +7,17 @@ import (
 	"testing"
 	"time"
 
+	sdkaddress "github.com/cosmos/cosmos-sdk/codec/address"
+
+	"cosmossdk.io/store/metrics"
+
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	"cosmossdk.io/store"
-	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/evidence"
 	"cosmossdk.io/x/upgrade"
+
 	// upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -674,6 +678,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		stakingKeeper,
 		"v1.5.0",
 		sdk.DefaultPowerReduction,
+		sdkaddress.NewBech32Codec("paloma"),
 	)
 
 	consensusRegistry := consensuskeeper.NewRegistry()

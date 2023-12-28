@@ -235,7 +235,7 @@ type App struct {
 	appCodec          codec.Codec
 	interfaceRegistry types.InterfaceRegistry
 	invCheckPeriod    uint
-
+	txconfig          client.TxConfig
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
@@ -353,6 +353,7 @@ func New(
 		gravitymoduletypes.StoreKey,
 		consensusparamtypes.StoreKey,
 		crisistypes.StoreKey,
+		wasmtypes.StoreKey,
 	)
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := storetypes.NewMemoryStoreKeys(
@@ -426,8 +427,6 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		authcodec.NewBech32Codec(params2.ValidatorAddressPrefix),
 		authcodec.NewBech32Codec(params2.ConsNodeAddressPrefix),
-		// app.StakingKeeper.ValidatorAddressCodec(),
-		// app.StakingKeeper.ConsensusAddressCodec(),
 	)
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec,
@@ -556,6 +555,7 @@ func New(
 		app.StakingKeeper,
 		minimumPigeonVersion,
 		sdk.DefaultPowerReduction,
+		authcodec.NewBech32Codec(params2.ValidatorAddressPrefix),
 	)
 
 	consensusRegistry := consensusmodulekeeper.NewRegistry()
@@ -599,7 +599,7 @@ func New(
 		app.GetSubspace(palomamoduletypes.ModuleName),
 		semverVersion,
 		app.ValsetKeeper,
-		app.PalomaKeeper.Upgrade,
+		app.UpgradeKeeper,
 	)
 
 	app.PalomaKeeper.ExternalChains = []palomamoduletypes.ExternalChainSupporterKeeper{
@@ -613,7 +613,7 @@ func New(
 		app.StakingKeeper,
 		app.SlashingKeeper,
 		app.AccountKeeper.AddressCodec(),
-		nil,
+		runtime.ProvideCometInfoService(),
 	)
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
@@ -752,7 +752,7 @@ func New(
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
-
+	app.txconfig = txConfig
 	evmModule := evm.NewAppModule(appCodec, app.EvmKeeper, app.AccountKeeper, app.BankKeeper)
 	consensusModule := consensusmodule.NewAppModule(appCodec, app.ConsensusKeeper, app.AccountKeeper, app.BankKeeper)
 	valsetModule := valsetmodule.NewAppModule(appCodec, app.ValsetKeeper, app.AccountKeeper, app.BankKeeper)
@@ -1019,6 +1019,10 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 // EndBlocker application updates every end block
 func (app *App) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
 	return app.ModuleManager.EndBlock(ctx)
+}
+
+func (app *App) TxConfig() client.TxConfig {
+	return app.txconfig
 }
 
 // InitChainer application update at chain initialization

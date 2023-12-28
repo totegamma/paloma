@@ -33,7 +33,7 @@ type ExternalChainSupporterKeeper interface {
 }
 
 type UpgradeKeeper interface {
-	GetLastCompletedUpgrade(ctx context.Context) (string, int64)
+	GetLastCompletedUpgrade(ctx context.Context) (string, int64, error)
 }
 
 type FeegrantKeeper interface {

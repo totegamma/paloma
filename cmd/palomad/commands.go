@@ -4,12 +4,14 @@ import (
 	"errors"
 	"io"
 
+	"github.com/cosmos/cosmos-sdk/client/pruning"
+
+	"github.com/cosmos/cosmos-sdk/client/debug"
+
 	cosmoslog "cosmossdk.io/log"
-	"cosmossdk.io/tools/confix/cmd"
-	tmcli "github.com/cometbft/cometbft/libs/cli"
+	confixcmd "cosmossdk.io/tools/confix/cmd"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -76,11 +78,12 @@ func newApp(
 	traceStore io.Writer,
 	appOpts servertypes.AppOptions,
 ) servertypes.Application {
-	// baseappOptions := server.DefaultBaseappOptions(appOpts)
+	baseappOptions := server.DefaultBaseappOptions(appOpts)
 
 	return app.New(
 		logger, db, traceStore, true,
-		nil,
+		appOpts,
+		baseappOptions...,
 	)
 }
 
@@ -93,10 +96,10 @@ func initRootCmd(
 ) {
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(basicManager, palomaapp.DefaultNodeHome),
-		genesisCommand(txConfig, basicManager, appExport),
-		tmcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
-		cmd.ConfigCommand(),
+		confixcmd.ConfigCommand(),
+		pruning.Cmd(newApp, palomaapp.DefaultNodeHome),
+		snapshot.Cmd(newApp),
 	)
 
 	server.AddCommands(rootCmd, palomaapp.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
@@ -104,21 +107,19 @@ func initRootCmd(
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
 	rootCmd.AddCommand(
 		server.StatusCommand(),
+		genesisCommand(txConfig, basicManager, appExport),
 		queryCommand(basicManager),
 		txCommand(basicManager),
 		keys.Commands(),
-	)
-	rootCmd.AddCommand(
-		snapshot.Cmd(newApp),
 	)
 }
 
 // genesisCommand builds genesis-related `palomad genesis` command. Users may provide application specific commands as a parameter
 func genesisCommand(encodingConfig params.EncodingConfig, basicManager module.BasicManager, appExport servertypes.AppExporter, cmds ...*cobra.Command) *cobra.Command {
-	cmd := genutilcli.GenesisCoreCommand(encodingConfig.TxConfig, basicManager, palomaapp.DefaultNodeHome)
+	cmd := genutilcli.Commands(encodingConfig.TxConfig, basicManager, palomaapp.DefaultNodeHome)
 
-	for _, sub_cmd := range cmds {
-		cmd.AddCommand(sub_cmd)
+	for _, subCmd := range cmds {
+		cmd.AddCommand(subCmd)
 	}
 	return cmd
 }
