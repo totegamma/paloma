@@ -709,7 +709,6 @@ func CreateTestEnv(t *testing.T) TestInput {
 
 	k := NewKeeper(
 		marshaler,
-		getSubspace(paramsKeeper, types.DefaultParamspace),
 		accountKeeper,
 		stakingKeeper,
 		bankKeeper,
@@ -718,6 +717,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		ibcTransferKeeper,
 		evmKeeper,
 		NewGravityStoreGetter(gravityKey),
+		"",
 	)
 
 	stakingKeeper.SetHooks(

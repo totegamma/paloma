@@ -7,7 +7,6 @@ import (
 	"cosmossdk.io/log"
 	dbm "github.com/cosmos/cosmos-db"
 
-	
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -39,7 +38,6 @@ func (ac appCreator) newApp(
 		db,
 		traceStore,
 		true,
-		ac.encCfg,
 		appOpts,
 		server.DefaultBaseappOptions(appOpts)...,
 	)
@@ -74,13 +72,13 @@ func (ac appCreator) appExport(
 	appOpts = viperAppOpts
 
 	if height != -1 {
-		app = palomaapp.New(logger, db, traceStore, false, ac.encCfg, appOpts)
+		app = palomaapp.New(logger, db, traceStore, false, appOpts)
 
 		if err := app.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		app = palomaapp.New(logger, db, traceStore, true, ac.encCfg, appOpts)
+		app = palomaapp.New(logger, db, traceStore, true, appOpts)
 	}
 
 	return app.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)

@@ -154,7 +154,7 @@ func (k Keeper) ChangeMinOnChainBalance(ctx sdk.Context, chainReferenceID string
 	return k.updateChainInfo(ctx, ci)
 }
 
-func (k Keeper) SupportedQueues(ctx sdk.Context) ([]consensus.SupportsConsensusQueueAction, error) {
+func (k Keeper) SupportedQueues(ctx context.Context) ([]consensus.SupportsConsensusQueueAction, error) {
 	chains, err := k.GetAllChainInfos(ctx)
 	if err != nil {
 		return nil, err
@@ -204,7 +204,8 @@ func (k Keeper) SupportedQueues(ctx sdk.Context) ([]consensus.SupportsConsensusQ
 				QueueOptions:                 opts,
 				ProcessMessageForAttestation: queueInfo.processAttesationFunc(k),
 			})
-			k.Logger(ctx).Debug("supported-queues", "chain-id", chainInfo.ChainReferenceID, "queue", queue)
+			sdkCtx := sdk.UnwrapSDKContext(ctx)
+			k.Logger(sdkCtx).Debug("supported-queues", "chain-id", chainInfo.ChainReferenceID, "queue", queue)
 		}
 	}
 
@@ -381,12 +382,13 @@ func (k Keeper) chainInfoStore(ctx context.Context) storetypes.KVStore {
 	return prefix.NewStore(kvstore, []byte("chain-info"))
 }
 
-func (k Keeper) PreJobExecution(ctx sdk.Context, job *schedulertypes.Job) error {
+func (k Keeper) PreJobExecution(ctx context.Context, job *schedulertypes.Job) error {
 	router := job.GetRouting()
 	chainReferenceID := router.GetChainReferenceID()
 	chain, err := k.GetChainInfo(ctx, chainReferenceID)
 	if err != nil {
-		k.Logger(ctx).Error("couldn't get chain info",
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+		k.Logger(sdkCtx).Error("couldn't get chain info",
 			"chain-reference-id", chainReferenceID,
 			"err", err,
 		)

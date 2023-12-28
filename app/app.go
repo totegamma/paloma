@@ -3,12 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	params2 "github.com/palomachain/paloma/app/params"
+	xchain "github.com/palomachain/paloma/internal/x-chain"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
-
-	xchain "github.com/palomachain/paloma/internal/x-chain"
 
 	"cosmossdk.io/log"
 	"github.com/CosmWasm/wasmd/x/wasm"
@@ -368,8 +368,6 @@ func New(
 		consensusmoduletypes.StoreKey,
 		valsetmoduletypes.StoreKey,
 		treasurymoduletypes.StoreKey,
-		valsetmoduletypes.StoreKey,
-		treasurymoduletypes.StoreKey,
 		evmmoduletypes.StoreKey,
 		gravitymoduletypes.StoreKey,
 		consensusparamtypes.StoreKey,
@@ -427,8 +425,8 @@ func New(
 		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
-		authcodec.NewBech32Codec(sdk.Bech32MainPrefix),
-		sdk.Bech32MainPrefix,
+		authcodec.NewBech32Codec(params2.AccountAddressPrefix),
+		params2.AccountAddressPrefix,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
@@ -437,7 +435,7 @@ func New(
 		app.AccountKeeper,
 		BlockedAddresses(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		logger,
+		log.NewNopLogger(),
 	)
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
@@ -445,8 +443,10 @@ func New(
 		app.AccountKeeper,
 		app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		app.StakingKeeper.ValidatorAddressCodec(),
-		app.StakingKeeper.ConsensusAddressCodec(),
+		authcodec.NewBech32Codec(params2.ValidatorAddressPrefix),
+		authcodec.NewBech32Codec(params2.ConsNodeAddressPrefix),
+		//app.StakingKeeper.ValidatorAddressCodec(),
+		//app.StakingKeeper.ConsensusAddressCodec(),
 	)
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec,
@@ -601,7 +601,6 @@ func New(
 
 	app.GravityKeeper = gravitymodulekeeper.NewKeeper(
 		appCodec,
-		app.GetSubspace(gravitymoduletypes.ModuleName),
 		app.AccountKeeper,
 		app.StakingKeeper,
 		app.BankKeeper,
@@ -610,6 +609,7 @@ func New(
 		app.TransferKeeper,
 		app.EvmKeeper,
 		gravitymodulekeeper.NewGravityStoreGetter(keys[gravitymoduletypes.StoreKey]),
+		"",
 	)
 
 	app.PalomaKeeper = *palomamodulekeeper.NewKeeper(
@@ -639,9 +639,7 @@ func New(
 
 	app.SchedulerKeeper = *schedulermodulekeeper.NewKeeper(
 		appCodec,
-		keys[schedulermoduletypes.StoreKey],
-		memKeys[schedulermoduletypes.MemStoreKey],
-		app.GetSubspace(schedulermoduletypes.ModuleName),
+		runtime.NewKVStoreService(keys[schedulermoduletypes.StoreKey]),
 		app.AccountKeeper,
 		app.EvmKeeper,
 		[]xchain.Bridge{

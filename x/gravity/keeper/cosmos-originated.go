@@ -10,7 +10,7 @@ import (
 )
 
 func (k Keeper) GetDenomOfERC20(ctx context.Context, chainReferenceId string, tokenContract types.EthAddress) (string, error) {
-	erc20ToDenom, err := keeperutil.Load[*types.ERC20ToDenom](k.GetStore(ctx), k.ProtoUnmarshaler, types.GetERC20ToDenomKey(chainReferenceId, tokenContract))
+	erc20ToDenom, err := keeperutil.Load[*types.ERC20ToDenom](k.GetStore(ctx), k.cdc, types.GetERC20ToDenomKey(chainReferenceId, tokenContract))
 	if errors.Is(err, keeperutil.ErrNotFound) {
 		return "", types.ErrDenomNotFound
 	}
@@ -23,7 +23,7 @@ func (k Keeper) GetDenomOfERC20(ctx context.Context, chainReferenceId string, to
 }
 
 func (k Keeper) GetERC20OfDenom(ctx context.Context, chainReferenceId, denom string) (*types.EthAddress, error) {
-	erc20ToDenom, err := keeperutil.Load[*types.ERC20ToDenom](k.GetStore(ctx), k.ProtoUnmarshaler, types.GetDenomToERC20Key(chainReferenceId, denom))
+	erc20ToDenom, err := keeperutil.Load[*types.ERC20ToDenom](k.GetStore(ctx), k.cdc, types.GetDenomToERC20Key(chainReferenceId, denom))
 	if errors.Is(err, keeperutil.ErrNotFound) {
 		return nil, types.ErrERC20NotFound
 	}
@@ -57,12 +57,12 @@ func (k Keeper) setDenomToERC20(ctx context.Context, chainReferenceId, denom str
 		Erc20:            tokenContract.GetAddress().String(),
 	}
 
-	err := keeperutil.Save(store, k.Protomarshaler, types.GetDenomToERC20Key(chainReferenceId, denom), &denomToERC20)
+	err := keeperutil.Save(store, k.cdc, types.GetDenomToERC20Key(chainReferenceId, denom), &denomToERC20)
 	if err != nil {
 		return err
 	}
 
-	return keeperutil.Save(store, k.Protomarshaler, types.GetERC20ToDenomKey(chainReferenceId, tokenContract), &denomToERC20)
+	return keeperutil.Save(store, k.cdc, types.GetERC20ToDenomKey(chainReferenceId, tokenContract), &denomToERC20)
 }
 
 func (k Keeper) GetAllDenomToERC20s(ctx context.Context) ([]*types.ERC20ToDenom, error) {

@@ -23,7 +23,7 @@ func (k Keeper) XChainType() xchain.Type {
 	return xchainType
 }
 
-func (k Keeper) XChainReferenceIDs(ctx sdk.Context) []xchain.ReferenceID {
+func (k Keeper) XChainReferenceIDs(ctx context.Context) []xchain.ReferenceID {
 	chainInfos, err := k.GetAllChainInfos(ctx)
 	if err != nil {
 		panic(err)
