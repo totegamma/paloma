@@ -3,20 +3,14 @@ package keeper
 import (
 	"bytes"
 	"context"
-	"cosmossdk.io/collections"
 	"cosmossdk.io/core/address"
-	"cosmossdk.io/x/feegrant"
-	"errors"
-	"fmt"
-	"math/big"
-	"sort"
-	"time"
-
 	cosmosstore "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
+	"errors"
+	"fmt"
 	"github.com/VolumeFi/whoops"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -27,6 +21,8 @@ import (
 	"github.com/palomachain/paloma/util/liblog"
 	"github.com/palomachain/paloma/util/slice"
 	"github.com/palomachain/paloma/x/valset/types"
+	"math/big"
+	"sort"
 )
 
 const (
@@ -47,8 +43,6 @@ type Keeper struct {
 	staking              types.StakingKeeper
 	storeKey             cosmosstore.KVStoreService
 	AddressCodec         address.Codec
-	FeeAllowance         collections.Map[collections.Pair[sdk.AccAddress, sdk.AccAddress], feegrant.Grant]
-	FeeAllowanceQueue    collections.Map[collections.Triple[time.Time, sdk.AccAddress, sdk.AccAddress], bool]
 }
 
 func NewKeeper(

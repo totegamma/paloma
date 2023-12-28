@@ -43,7 +43,6 @@ func ValsetKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	k := keeper.NewKeeper(
 		cdc,
 		storeService,
-		memStoreKey,
 		paramsSubspace,
 		nil,
 		"v1.4.0",

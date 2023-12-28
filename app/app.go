@@ -583,15 +583,15 @@ func New(
 		appCodec,
 		runtime.NewKVStoreService(keys[consensusmoduletypes.StoreKey]),
 		app.GetSubspace(consensusmoduletypes.ModuleName),
-		nil, // TODO: pass valset keeper
+		app.ValsetKeeper,
 		consensusRegistry,
 	)
 
 	app.EvmKeeper = *evmmodulekeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[evmmoduletypes.StoreKey]),
-		nil, //TODO
-		nil, //TODO
+		app.ConsensusKeeper,
+		app.ValsetKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.ValsetKeeper.SnapshotListeners = []valsetmoduletypes.OnSnapshotBuiltListener{
@@ -609,7 +609,7 @@ func New(
 		app.TransferKeeper,
 		app.EvmKeeper,
 		gravitymodulekeeper.NewGravityStoreGetter(keys[gravitymoduletypes.StoreKey]),
-		"",
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	app.PalomaKeeper = *palomamodulekeeper.NewKeeper(

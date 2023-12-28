@@ -169,7 +169,7 @@ func (_m *ValsetKeeper) GetValidatorChainInfos(ctx context.Context, valAddr cosm
 }
 
 // IsJailed provides a mock function with given fields: ctx, val
-func (_m *ValsetKeeper) IsJailed(ctx context.Context, val cosmos_sdktypes.ValAddress) bool {
+func (_m *ValsetKeeper) IsJailed(ctx context.Context, val cosmos_sdktypes.ValAddress) (bool, error) {
 	ret := _m.Called(ctx, val)
 
 	if len(ret) == 0 {
@@ -177,13 +177,23 @@ func (_m *ValsetKeeper) IsJailed(ctx context.Context, val cosmos_sdktypes.ValAdd
 	}
 
 	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, cosmos_sdktypes.ValAddress) (bool, error)); ok {
+		return rf(ctx, val)
+	}
 	if rf, ok := ret.Get(0).(func(context.Context, cosmos_sdktypes.ValAddress) bool); ok {
 		r0 = rf(ctx, val)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, cosmos_sdktypes.ValAddress) error); ok {
+		r1 = rf(ctx, val)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Jail provides a mock function with given fields: ctx, valAddr, reason

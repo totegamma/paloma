@@ -30,6 +30,7 @@ type ConsensusKeeper interface {
 	DeleteJob(ctx context.Context, queueTypeName string, id uint64) (err error)
 }
 
+//go:generate mockery --name=ValsetKeeper
 type ValsetKeeper interface {
 	FindSnapshotByID(ctx context.Context, id uint64) (*valsettypes.Snapshot, error)
 	GetCurrentSnapshot(ctx context.Context) (*valsettypes.Snapshot, error)

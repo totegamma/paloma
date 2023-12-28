@@ -100,7 +100,12 @@ func (k Keeper) processValidatorBalanceProof(
 			if balance.Cmp(minBalance) == -1 || balance.Cmp(big.NewInt(0)) == 0 {
 				isJailed, err := k.Valset.IsJailed(ctx, valAddr)
 				if err != nil {
-
+					k.Logger(ctx).Error(
+						"error in checking jailed validator",
+						"err", err,
+						"val-addr", valAddr,
+						"eth-addr", hexAddr,
+					)
 				}
 
 				if !isJailed {

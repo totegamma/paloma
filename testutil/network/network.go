@@ -61,7 +61,6 @@ func DefaultConfig() network.Config {
 				dbm.NewMemDB(),
 				nil,
 				true,
-				encoding,
 				simtestutil.NewAppOptionsWithFlagHome(val.GetCtx().Config.RootDir),
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
 				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
