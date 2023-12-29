@@ -33,6 +33,8 @@ service Msg {
 // the coin to send across the bridge, note the restriction that this is a
 // single coin not a set of coins that is normal in other Cosmos messages
 message MsgSendToEth {
+  option (cosmos.msg.v1.signer) = "metadata";
+
   string                   sender   = 1 [deprecated = true];
   string                   eth_dest = 2;
   cosmos.base.v1beta1.Coin amount   = 3 [

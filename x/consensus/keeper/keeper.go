@@ -52,7 +52,7 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx context.Context) log.Logger {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	return liblog.FromSDKLogger(k.Logger(sdkCtx)).With("module", fmt.Sprintf("x/%s", types.ModuleName))
+	return liblog.FromSDKLogger(sdkCtx.Logger()).With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 func (k Keeper) Store(ctx context.Context) storetypes.KVStore {

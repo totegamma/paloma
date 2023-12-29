@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/palomachain/paloma/x/consensus/keeper/consensus"
 	consensusmock "github.com/palomachain/paloma/x/consensus/keeper/consensus/mocks"
 	"github.com/palomachain/paloma/x/consensus/types"
@@ -424,7 +425,6 @@ func TestGettingMessagesThatHaveReachedConsensus(t *testing.T) {
 				sdkCtx := sdk.UnwrapSDKContext(sd.ctx)
 				msg := &types.SimpleMessage{}
 				_, err := sd.keeper.PutMessageInQueue(sdkCtx, defaultQueueName, msg, nil)
-				_, err = sd.keeper.PutMessageInQueue(sdkCtx, defaultQueueName, msg, nil)
 				require.NoError(t, err)
 
 				sd.ms.ValsetKeeper.On("GetSigningKey", mock.Anything, sdk.ValAddress("val3"), "evm", "test", "bob3").Return(
