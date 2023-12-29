@@ -28,7 +28,6 @@ message MsgAddExternalChainInfoForValidatorResponse {}
 
 message MsgKeepAlive {
   option (cosmos.msg.v1.signer) = "metadata";
-  option (gogoproto.goproto_getters) = false;
   string creator = 1 [deprecated = true];
   string pigeonVersion = 2;
   palomachain.paloma.valset.MsgMetadata metadata = 3 [(gogoproto.nullable) = false];

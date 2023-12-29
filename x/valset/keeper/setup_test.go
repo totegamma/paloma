@@ -10,6 +10,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmdb "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,6 +60,7 @@ func newValsetKeeper(t testing.TB) (*Keeper, mockedServices, sdk.Context) {
 		ms.StakingKeeper,
 		"v1.4.0",
 		sdk.DefaultPowerReduction,
+		address.NewBech32Codec("paloma"),
 	)
 
 	k.EvmKeeper = ms.EvmKeeper
