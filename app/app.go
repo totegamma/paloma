@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"io"
 	"os"
 	"path/filepath"
@@ -141,6 +140,7 @@ import (
 	valsetmodulekeeper "github.com/palomachain/paloma/x/valset/keeper"
 	valsetmoduletypes "github.com/palomachain/paloma/x/valset/types"
 	"github.com/spf13/cast"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 const (
@@ -304,10 +304,10 @@ func New(
 		SigningOptions: signing.Options{
 			CustomGetSigners: make(map[protoreflect.FullName]signing.GetSignersFunc),
 			AddressCodec: address.Bech32Codec{
-				Bech32Prefix: sdk.GetConfig().GetBech32AccountAddrPrefix(),
+				Bech32Prefix: params2.AccountAddressPrefix,
 			},
 			ValidatorAddressCodec: address.Bech32Codec{
-				Bech32Prefix: sdk.GetConfig().GetBech32ValidatorAddrPrefix(),
+				Bech32Prefix: params2.ValidatorAddressPrefix,
 			},
 		},
 	})
@@ -791,7 +791,7 @@ func New(
 		gravityModule,
 		palomaModule,
 		treasuryModule,
-		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasm.ModuleName)),
+		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),

@@ -2,22 +2,22 @@ package keeper
 
 import (
 	"context"
+	"cosmossdk.io/x/tx/signing"
 	"crypto/ecdsa"
+	"fmt"
+	"github.com/cosmos/gogoproto/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"math/big"
 	"testing"
 	"time"
 
-	sdkaddress "github.com/cosmos/cosmos-sdk/codec/address"
-
-	"cosmossdk.io/store/metrics"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	"cosmossdk.io/store"
+	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/evidence"
 	"cosmossdk.io/x/upgrade"
-
 	// upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -26,6 +26,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdkaddress "github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	ccodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -530,8 +531,8 @@ func CreateTestEnv(t *testing.T) TestInput {
 		runtime.NewKVStoreService(keyAcc),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
-		authcodec.NewBech32Codec(sdk.Bech32MainPrefix),
-		sdk.Bech32MainPrefix,
+		authcodec.NewBech32Codec(gravityparams.AccountAddressPrefix),
+		gravityparams.AccountAddressPrefix,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -539,30 +540,47 @@ func CreateTestEnv(t *testing.T) TestInput {
 	for acc := range maccPerms {
 		blockedAddr[authtypes.NewModuleAddress(acc).String()] = true
 	}
-	var logger log.Logger
+	//var logger log.Logger
+
+	interfaceRegistry, _ := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
+		ProtoFiles: proto.HybridResolver,
+		SigningOptions: signing.Options{
+			CustomGetSigners: make(map[protoreflect.FullName]signing.GetSignersFunc),
+			AddressCodec: sdkaddress.Bech32Codec{
+				Bech32Prefix: gravityparams.AccountAddressPrefix,
+			},
+			ValidatorAddressCodec: sdkaddress.Bech32Codec{
+				Bech32Prefix: gravityparams.ValidatorAddressPrefix,
+			},
+		},
+	})
+	appCodec := codec.NewProtoCodec(interfaceRegistry)
 	bankKeeper := bankkeeper.NewBaseKeeper(
-		marshaler,
+		appCodec,
 		runtime.NewKVStoreService(keyBank),
 		accountKeeper,
 		blockedAddr,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		logger,
+		log.NewNopLogger(),
 	)
+
 	err = bankKeeper.SetParams(ctx, banktypes.Params{
 		SendEnabled:        []*banktypes.SendEnabled{},
 		DefaultSendEnabled: true,
 	})
+
 	require.NoError(t, err)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
-		marshaler,
+		appCodec,
 		runtime.NewKVStoreService(keyStaking),
 		accountKeeper,
 		bankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		nil,
-		nil,
+		authcodec.NewBech32Codec(gravityparams.ValidatorAddressPrefix),
+		authcodec.NewBech32Codec(gravityparams.ConsNodeAddressPrefix),
 	)
+
 	err = stakingKeeper.SetParams(ctx, TestingStakeParams)
 	require.NoError(t, err)
 
@@ -601,13 +619,14 @@ func CreateTestEnv(t *testing.T) TestInput {
 			err = distKeeper.FeePool.Set(ctx, feePool)
 			require.NoError(t, err)
 		}
+		fmt.Println("***************** printing here **********************", mod)
 		accountKeeper.SetModuleAccount(ctx, mod)
 	}
 
 	stakeAddr := authtypes.NewModuleAddress(stakingtypes.BondedPoolName)
 	moduleAcct := accountKeeper.GetAccount(ctx, stakeAddr)
 	require.NotNil(t, moduleAcct)
-
+	//fmt.Println("***************** printing here **********************")
 	bApp := *baseapp.NewBaseApp("test", log.NewTestLogger(t), db, MakeTestEncodingConfig().TxConfig.TxDecoder())
 	govKeeper := govkeeper.NewKeeper(
 		marshaler,
@@ -615,7 +634,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
-		nil,
+		distKeeper,
 		bApp.MsgServiceRouter(),
 		govtypes.DefaultConfig(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),

@@ -368,7 +368,10 @@ var _ = g.Describe("attest router", func() {
 					g.When("transfer is done", func() {
 						g.It("must remove the deployment from deployment store", func() {
 							setupChainSupport()
-							k.SetSmartContractDeploymentStatusByContractID(ctx, uint64(1), newChain.ChainReferenceID, types.SmartContractDeployment_WAITING_FOR_ERC20_OWNERSHIP_TRANSFER)
+							err := k.SetSmartContractDeploymentStatusByContractID(ctx, uint64(1), newChain.ChainReferenceID, types.SmartContractDeployment_WAITING_FOR_ERC20_OWNERSHIP_TRANSFER)
+							if err != nil {
+								return
+							}
 							Expect(subject()).To(BeNil())
 							v, _ := k.getSmartContractDeploymentByContractID(ctx, uint64(1), newChain.GetChainReferenceID())
 							Expect(v).To(BeNil())

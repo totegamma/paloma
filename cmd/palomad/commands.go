@@ -4,16 +4,14 @@ import (
 	"errors"
 	"io"
 
-	"github.com/cosmos/cosmos-sdk/client/pruning"
-
-	"github.com/cosmos/cosmos-sdk/client/debug"
-
 	cosmoslog "cosmossdk.io/log"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/snapshot"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

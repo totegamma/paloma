@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/palomachain/paloma/app"
 	xchain "github.com/palomachain/paloma/internal/x-chain"
 	xchainmocks "github.com/palomachain/paloma/internal/x-chain/mocks"
 	"github.com/palomachain/paloma/x/scheduler/keeper"
@@ -23,17 +22,12 @@ func TestScheduler(t *testing.T) {
 var _ = Describe("jobs!", func() {
 	var k *keeper.Keeper
 	var ctx sdk.Context
-	var a app.TestApp
-
 	BeforeEach(func() {
 		t := GinkgoT()
-		a = app.NewTestApp(t, false)
-		ctx = a.NewContext(false).WithBlockHeight(5)
-		k = &a.SchedulerKeeper
+		f := initFixture(t)
+		k = &f.schedulerKeeper
+		ctx = f.ctx.WithBlockHeight(5)
 	})
-
-	_ = k
-	_ = ctx
 
 	Context("Verify the validate basics on the job", func() {
 		DescribeTable("verify job's ValidateBasic function",

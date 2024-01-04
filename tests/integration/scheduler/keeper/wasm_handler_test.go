@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/palomachain/paloma/app"
 	xchain "github.com/palomachain/paloma/internal/x-chain"
 	xchainmocks "github.com/palomachain/paloma/internal/x-chain/mocks"
 	"github.com/palomachain/paloma/x/scheduler/keeper"
@@ -18,19 +17,20 @@ import (
 )
 
 var _ = Describe("wasm message handler", func() {
-	var a app.TestApp
+	t := GinkgoT()
+	f := initFixture(t)
 	var ctx sdk.Context
 
 	BeforeEach(func() {
-		a = app.NewTestApp(GinkgoT(), false)
-		ctx = a.NewContext(false).WithBlockHeight(5)
+
+		ctx = f.ctx.WithBlockHeight(5)
 	})
 
 	var subjectMsg keeper.ExecuteJobWasmEvent
 	var serializedSubjectMessage []byte
 
 	subject := func() error {
-		_, _, err := a.SchedulerKeeper.ExecuteWasmJobEventListener()(ctx, sdk.AccAddress("contract-addr"), "ibc-port", wasmvmtypes.CosmosMsg{
+		_, _, err := f.schedulerKeeper.ExecuteWasmJobEventListener()(ctx, sdk.AccAddress("contract-addr"), "ibc-port", wasmvmtypes.CosmosMsg{
 			Custom: serializedSubjectMessage,
 		})
 		return err
@@ -60,13 +60,13 @@ var _ = Describe("wasm message handler", func() {
 		var bm *xchainmocks.Bridge
 		BeforeEach(func() {
 			bm = xchainmocks.NewBridge(GinkgoT())
-			a.SchedulerKeeper.Chains[typ] = bm
+			f.schedulerKeeper.Chains[typ] = bm
 		})
 
 		BeforeEach(func() {
 			bm.On("VerifyJob", mock.Anything, mock.Anything, mock.Anything, refID).Return(nil)
 			var err error
-			err = a.SchedulerKeeper.AddNewJob(ctx, &types.Job{
+			err = f.schedulerKeeper.AddNewJob(ctx, &types.Job{
 				ID:    jobID,
 				Owner: sdk.AccAddress("me"),
 				Routing: types.Routing{
