@@ -5,7 +5,6 @@ import (
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/tx/signing"
-	"fmt"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -89,7 +88,7 @@ type fixture struct {
 	legacyQueryClient v1beta1.QueryClient
 
 	accountKeeper   authkeeper.AccountKeeper
-	evmKeeper       types.EvmKeeper
+	evmKeeper       evmmodulekeeper.Keeper
 	schedulerKeeper keeper.Keeper
 	paramsKeeper    paramskeeper.Keeper
 }
@@ -100,7 +99,8 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 	config.SetBech32PrefixForValidator("palomavaloper", "valoperpub")
 
 	keys := storetypes.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, distrtypes.StoreKey, stakingtypes.StoreKey, types.StoreKey,
+		authtypes.StoreKey, banktypes.StoreKey, distrtypes.StoreKey,
+		stakingtypes.StoreKey, types.StoreKey, evmmoduletypes.StoreKey,
 	)
 	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}, bank.AppModuleBasic{}, gov.AppModuleBasic{}).Codec
 
@@ -147,7 +147,6 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
 	paramsKeeper := initParamsKeeper(appCodec, legacyAmino, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
 
-	fmt.Println("************ BANKING CHECK ********************", authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
@@ -170,7 +169,7 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 	valsetKeeper := *valsetmodulekeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[valsetmoduletypes.StoreKey]),
-		getSubspace(valsetmoduletypes.ModuleName, paramskeeper.Keeper{}),
+		getSubspace(valsetmoduletypes.ModuleName, paramsKeeper),
 		stakingKeeper,
 		minimumPigeonVersion,
 		sdk.DefaultPowerReduction,
@@ -180,7 +179,7 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 	consensusKeeper := *consensusmodulekeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[consensusmoduletypes.StoreKey]),
-		getSubspace(consensusmoduletypes.ModuleName, paramskeeper.Keeper{}),
+		getSubspace(consensusmoduletypes.ModuleName, paramsKeeper),
 		valsetKeeper,
 		consensusRegistry,
 	)
@@ -204,7 +203,7 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, authsims.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
-	schedulerModule := scheduler.NewAppModule(cdc, keeper.Keeper{}, accountKeeper, bankKeeper)
+	schedulerModule := scheduler.NewAppModule(cdc, schedulerKeeper, accountKeeper, bankKeeper)
 
 	integrationApp := integration.NewIntegrationApp(newCtx, logger, keys, cdc, map[string]appmodule.AppModule{
 		authtypes.ModuleName: authModule,

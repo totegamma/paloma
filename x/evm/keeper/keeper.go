@@ -124,7 +124,7 @@ func NewKeeper(
 			cdc:             cdc,
 		},
 		msgAssigner: MsgAssigner{
-			nil,
+			valsetKeeper,
 		},
 		authority: authority,
 	}

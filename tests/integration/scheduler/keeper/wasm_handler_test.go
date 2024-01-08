@@ -22,7 +22,7 @@ var _ = Describe("wasm message handler", func() {
 	var ctx sdk.Context
 
 	BeforeEach(func() {
-
+		f = initFixture(t)
 		ctx = f.ctx.WithBlockHeight(5)
 	})
 
