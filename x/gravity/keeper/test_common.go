@@ -2,14 +2,15 @@ package keeper
 
 import (
 	"context"
-	"cosmossdk.io/x/tx/signing"
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/cosmos/gogoproto/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"math/big"
 	"testing"
 	"time"
+
+	"cosmossdk.io/x/tx/signing"
+	"github.com/cosmos/gogoproto/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -18,7 +19,6 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/evidence"
 	"cosmossdk.io/x/upgrade"
-	// upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -74,6 +74,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	gravityparams "github.com/palomachain/paloma/app/params"
+	params2 "github.com/palomachain/paloma/app/params"
 	consensuskeeper "github.com/palomachain/paloma/x/consensus/keeper"
 	consensustypes "github.com/palomachain/paloma/x/consensus/types"
 	evmkeeper "github.com/palomachain/paloma/x/evm/keeper"
@@ -717,6 +718,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		consensusKeeper,
 		valsetKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authcodec.NewBech32Codec(params2.ValidatorAddressPrefix),
 	)
 
 	valsetKeeper.EvmKeeper = evmKeeper

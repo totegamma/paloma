@@ -112,7 +112,7 @@ func NewKeeper(
 	storeService corestore.KVStoreService,
 	consensusKeeper types.ConsensusKeeper,
 	valsetKeeper types.ValsetKeeper,
-	authority string,
+	authority string, a address.Codec,
 ) *Keeper {
 	k := &Keeper{
 		cdc:             cdc,
@@ -124,9 +124,10 @@ func NewKeeper(
 			cdc:             cdc,
 		},
 		msgAssigner: MsgAssigner{
-			valsetKeeper,
+			ValsetKeeper: valsetKeeper,
 		},
-		authority: authority,
+		authority:    authority,
+		AddressCodec: a,
 	}
 	k.ider = keeperutil.NewIDGenerator(keeperutil.StoreGetterFn(k.provideSmartContractStore), []byte("id-key"))
 
@@ -786,17 +787,4 @@ func (k Keeper) GetValidatorAddressByEthAddress(ctx context.Context, ethAddr gra
 		}
 	}
 	return
-}
-
-func (k *Keeper) MustGetValAddr(addr string) sdk.ValAddress {
-	defer func() {
-		if r := recover(); r != nil {
-			k.Logger(context.Background()).Error("error while getting valAddr", r)
-		}
-	}()
-	bz, err := k.AddressCodec.StringToBytes(addr)
-	if err != nil {
-		panic(err)
-	}
-	return bz
 }
