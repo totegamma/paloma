@@ -577,6 +577,7 @@ func New(
 		app.ConsensusKeeper,
 		app.ValsetKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authcodec.NewBech32Codec(params2.ValidatorAddressPrefix),
 	)
 	app.ValsetKeeper.SnapshotListeners = []valsetmoduletypes.OnSnapshotBuiltListener{
 		app.EvmKeeper,
@@ -603,6 +604,7 @@ func New(
 		semverVersion,
 		app.ValsetKeeper,
 		app.UpgradeKeeper,
+		authcodec.NewBech32Codec(params2.ValidatorAddressPrefix),
 	)
 
 	app.PalomaKeeper.ExternalChains = []palomamoduletypes.ExternalChainSupporterKeeper{

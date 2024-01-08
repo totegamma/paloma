@@ -38,6 +38,7 @@ func NewKeeper(
 	appVersion string,
 	valset types.ValsetKeeper,
 	upgrade types.UpgradeKeeper,
+	addressCodec address.Codec,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -52,13 +53,13 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		paramstore: ps,
-		Valset:     valset,
-		Upgrade:    upgrade,
-
-		AppVersion: appVersion,
+		cdc:          cdc,
+		storeKey:     storeKey,
+		paramstore:   ps,
+		Valset:       valset,
+		Upgrade:      upgrade,
+		AddressCodec: addressCodec,
+		AppVersion:   appVersion,
 	}
 }
 

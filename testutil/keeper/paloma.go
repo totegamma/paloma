@@ -13,7 +13,9 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
+	params2 "github.com/palomachain/paloma/app/params"
 	"github.com/palomachain/paloma/x/paloma/keeper"
 	"github.com/palomachain/paloma/x/paloma/types"
 	valsetkeeper "github.com/palomachain/paloma/x/valset/keeper"
@@ -46,6 +48,7 @@ func PalomaKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		"v0.0.1", // do not use this PalomaKeeper function!
 		valsetkeeper.Keeper{},
 		nil,
+		authcodec.NewBech32Codec(params2.ValidatorAddressPrefix),
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

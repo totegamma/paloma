@@ -1,18 +1,31 @@
 package keeper_test
 
 import (
+	"context"
+	"fmt"
+	"strings"
+
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
-	"cosmossdk.io/x/tx/signing"
+	"cosmossdk.io/x/upgrade"
+	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+	db "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/version"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/address"
-	codecTypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil/integration"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
@@ -34,7 +47,6 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
@@ -46,18 +58,24 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	params2 "github.com/palomachain/paloma/app/params"
 	xchain "github.com/palomachain/paloma/internal/x-chain"
+	"github.com/palomachain/paloma/x/consensus"
 	consensusmodulekeeper "github.com/palomachain/paloma/x/consensus/keeper"
 	consensusmoduletypes "github.com/palomachain/paloma/x/consensus/types"
+	"github.com/palomachain/paloma/x/evm"
 	evmmodulekeeper "github.com/palomachain/paloma/x/evm/keeper"
 	evmmoduletypes "github.com/palomachain/paloma/x/evm/types"
 	gravitymoduletypes "github.com/palomachain/paloma/x/gravity/types"
+	"github.com/palomachain/paloma/x/paloma"
+	palomakeeper "github.com/palomachain/paloma/x/paloma/keeper"
+	palomamoduletypes "github.com/palomachain/paloma/x/paloma/types"
 	"github.com/palomachain/paloma/x/scheduler"
 	"github.com/palomachain/paloma/x/scheduler/keeper"
-	"github.com/palomachain/paloma/x/scheduler/types"
+	schedulertypes "github.com/palomachain/paloma/x/scheduler/types"
 	treasurymoduletypes "github.com/palomachain/paloma/x/treasury/types"
+	"github.com/palomachain/paloma/x/valset"
 	valsetmodulekeeper "github.com/palomachain/paloma/x/valset/keeper"
 	valsetmoduletypes "github.com/palomachain/paloma/x/valset/types"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"github.com/spf13/cast"
 )
 
 const (
@@ -82,26 +100,44 @@ var (
 )
 
 type fixture struct {
-	ctx sdk.Context
-
+	ctx               sdk.Context
+	codec             codec.Codec
 	queryClient       v1.QueryClient
 	legacyQueryClient v1beta1.QueryClient
-
-	accountKeeper   authkeeper.AccountKeeper
-	evmKeeper       types.EvmKeeper
-	schedulerKeeper keeper.Keeper
-	paramsKeeper    paramskeeper.Keeper
+	consensusKeeper   consensusmodulekeeper.Keeper
+	evmKeeper         evmmodulekeeper.Keeper
+	valsetKeeper      valsetmodulekeeper.Keeper
+	schedulerKeeper   schedulertypes.Keeper
+	stakingKeeper     stakingkeeper.Keeper
+	paramsKeeper      paramskeeper.Keeper
+	palomaKeeper      palomakeeper.Keeper
+	upgradeKeeper     upgradekeeper.Keeper
 }
 
 func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount("paloma", "pub")
 	config.SetBech32PrefixForValidator("palomavaloper", "valoperpub")
-
+	// db := dbm.NewMemDB()
 	keys := storetypes.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, distrtypes.StoreKey, stakingtypes.StoreKey, types.StoreKey,
+		authtypes.StoreKey, banktypes.StoreKey,
+		distrtypes.StoreKey, stakingtypes.StoreKey,
+		schedulertypes.StoreKey, evmmoduletypes.StoreKey,
+		valsetmoduletypes.StoreKey, consensusmoduletypes.StoreKey,
+		upgradetypes.StoreKey,
 	)
-	cdc := moduletestutil.MakeTestEncodingConfig(auth.AppModuleBasic{}, bank.AppModuleBasic{}, gov.AppModuleBasic{}).Codec
+	encCfg := moduletestutil.MakeTestEncodingConfig(
+		auth.AppModuleBasic{},
+		bank.AppModuleBasic{},
+		gov.AppModuleBasic{},
+		evm.AppModuleBasic{},
+		scheduler.AppModuleBasic{},
+		valset.AppModuleBasic{},
+		consensus.AppModuleBasic{},
+		paloma.AppModuleBasic{},
+	)
+
+	cdc := encCfg.Codec
 
 	logger := log.NewTestLogger(t)
 	cms := integration.CreateMultiStore(keys, logger)
@@ -115,7 +151,7 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 		minttypes.ModuleName:           {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		types.ModuleName:               {authtypes.Burner},
+		schedulertypes.ModuleName:      {authtypes.Burner},
 	}
 
 	accountKeeper := authkeeper.NewAccountKeeper(
@@ -129,19 +165,19 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 		"paloma",
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	interfaceRegistry, _ := codecTypes.NewInterfaceRegistryWithOptions(codecTypes.InterfaceRegistryOptions{
-		ProtoFiles: proto.HybridResolver,
-		SigningOptions: signing.Options{
-			CustomGetSigners: make(map[protoreflect.FullName]signing.GetSignersFunc),
-			AddressCodec: address.Bech32Codec{
-				Bech32Prefix: params2.AccountAddressPrefix,
-			},
-			ValidatorAddressCodec: address.Bech32Codec{
-				Bech32Prefix: params2.ValidatorAddressPrefix,
-			},
-		},
-	})
-	appCodec := codec.NewProtoCodec(interfaceRegistry)
+	// interfaceRegistry, _ := codecTypes.NewInterfaceRegistryWithOptions(codecTypes.InterfaceRegistryOptions{
+	// 	ProtoFiles: proto.HybridResolver,
+	// 	SigningOptions: signing.Options{
+	// 		CustomGetSigners: make(map[protoreflect.FullName]signing.GetSignersFunc),
+	// 		AddressCodec: address.Bech32Codec{
+	// 			Bech32Prefix: params2.AccountAddressPrefix,
+	// 		},
+	// 		ValidatorAddressCodec: address.Bech32Codec{
+	// 			Bech32Prefix: params2.ValidatorAddressPrefix,
+	// 		},
+	// 	},
+	// })
+	appCodec := codec.NewProtoCodec(cdc.InterfaceRegistry())
 	legacyAmino := codec.NewLegacyAmino()
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
 	paramsKeeper := initParamsKeeper(appCodec, legacyAmino, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
@@ -168,7 +204,7 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 	valsetKeeper := *valsetmodulekeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[valsetmoduletypes.StoreKey]),
-		getSubspace(valsetmoduletypes.ModuleName, paramskeeper.Keeper{}),
+		getSubspace(valsetmoduletypes.ModuleName, paramsKeeper),
 		stakingKeeper,
 		minimumPigeonVersion,
 		sdk.DefaultPowerReduction,
@@ -178,7 +214,7 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 	consensusKeeper := *consensusmodulekeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[consensusmoduletypes.StoreKey]),
-		getSubspace(consensusmoduletypes.ModuleName, paramskeeper.Keeper{}),
+		getSubspace(consensusmoduletypes.ModuleName, paramsKeeper),
 		valsetKeeper,
 		consensusRegistry,
 	)
@@ -190,10 +226,13 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		authcodec.NewBech32Codec(params2.ValidatorAddressPrefix),
 	)
-
+	consensusRegistry.Add(
+		evmKeeper,
+	)
+	valsetKeeper.EvmKeeper = evmKeeper
 	schedulerKeeper := *keeper.NewKeeper(
 		appCodec,
-		runtime.NewKVStoreService(keys[types.StoreKey]),
+		runtime.NewKVStoreService(keys[schedulertypes.StoreKey]),
 		accountKeeper,
 		evmKeeper,
 		[]xchain.Bridge{
@@ -201,14 +240,75 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 		},
 	)
 
+	appOptions := make(simtestutil.AppOptionsMap, 0)
+
+	appOpts := appOptions
+	skipUpgradeHeights := map[int64]bool{}
+	for _, h := range cast.ToIntSlice(appOpts.Get(server.FlagUnsafeSkipUpgrades)) {
+		skipUpgradeHeights[int64(h)] = true
+	}
+	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
+
+	bApp := *baseapp.NewBaseApp(
+		"integration-app",
+		logger,
+		db.NewMemDB(),
+		encCfg.TxConfig.TxDecoder(),
+	)
+
+	version.Version = "v5.1.6"
+	bApp.SetVersion(version.Version)
+	oldVersion := version.Version
+	t.Cleanup(func() {
+		version.Version = oldVersion
+	})
+
+	upgradeKeeper := *upgradekeeper.NewKeeper(
+		skipUpgradeHeights,
+		runtime.NewKVStoreService(keys[upgradetypes.StoreKey]),
+		appCodec,
+		homePath,
+		&bApp,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	semverVersion := bApp.Version()
+
+	if !strings.HasPrefix(semverVersion, "v") {
+		semverVersion = fmt.Sprintf("v%s", semverVersion)
+	}
+	palomaKeeper := palomakeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[palomamoduletypes.StoreKey]),
+		getSubspace(palomamoduletypes.ModuleName, paramsKeeper),
+		semverVersion,
+		valsetKeeper,
+		upgradeKeeper, //TODO
+		authcodec.NewBech32Codec(params2.ValidatorAddressPrefix),
+	)
+
+	palomaKeeper.ExternalChains = []palomamoduletypes.ExternalChainSupporterKeeper{
+		evmKeeper,
+	}
+
 	authModule := auth.NewAppModule(cdc, accountKeeper, authsims.RandomGenesisAccounts, nil)
 	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
-	schedulerModule := scheduler.NewAppModule(cdc, keeper.Keeper{}, accountKeeper, bankKeeper)
+	schedulerModule := scheduler.NewAppModule(cdc, schedulerKeeper, accountKeeper, bankKeeper)
+	evmModule := evm.NewAppModule(cdc, evmKeeper, accountKeeper, bankKeeper)
+	upgradeModule := upgrade.NewAppModule(&upgradeKeeper, address.NewBech32Codec("cosmos"))
+	palomaModule := paloma.NewAppModule(cdc, *palomaKeeper, accountKeeper, bankKeeper)
 
 	integrationApp := integration.NewIntegrationApp(newCtx, logger, keys, cdc, map[string]appmodule.AppModule{
-		authtypes.ModuleName: authModule,
-		banktypes.ModuleName: bankModule,
-		types.ModuleName:     schedulerModule,
+		authtypes.ModuleName:         authModule,
+		banktypes.ModuleName:         bankModule,
+		schedulertypes.ModuleName:    schedulerModule,
+		evmmoduletypes.ModuleName:    evmModule,
+		palomamoduletypes.ModuleName: palomaModule,
+		upgradetypes.ModuleName:      upgradeModule,
+	})
+
+	upgradeKeeper.SetUpgradeHandler(semverVersion, func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (vm module.VersionMap, err error) {
+		return
 	})
 
 	sdkCtx := sdk.UnwrapSDKContext(integrationApp.Context())
@@ -217,12 +317,17 @@ func initFixture(t ginkgo.FullGinkgoTInterface) *fixture {
 	legacyQueryClient := v1beta1.NewQueryClient(integrationApp.QueryHelper())
 	return &fixture{
 		ctx:               sdkCtx,
+		codec:             appCodec,
 		queryClient:       queryClient,
 		legacyQueryClient: legacyQueryClient,
-		accountKeeper:     accountKeeper,
+		consensusKeeper:   consensusKeeper,
+		valsetKeeper:      valsetKeeper,
+		schedulerKeeper:   schedulerKeeper,
 		paramsKeeper:      paramsKeeper,
 		evmKeeper:         evmKeeper,
-		schedulerKeeper:   schedulerKeeper,
+		stakingKeeper:     *stakingKeeper,
+		palomaKeeper:      *palomaKeeper,
+		upgradeKeeper:     upgradeKeeper,
 	}
 
 }
@@ -264,7 +369,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName)
 	paramsKeeper.Subspace(crisistypes.ModuleName)
-	paramsKeeper.Subspace(types.ModuleName)
+	paramsKeeper.Subspace(schedulertypes.ModuleName)
 	paramsKeeper.Subspace(consensusmoduletypes.ModuleName)
 	paramsKeeper.Subspace(valsetmoduletypes.ModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
